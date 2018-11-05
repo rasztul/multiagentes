@@ -1,3 +1,5 @@
+;por Pablo Plaza y Raul Gardunho
+
 breed [soles sol]
 breed [lechugas lechuga]
 breed [suministros suministro]
