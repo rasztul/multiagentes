@@ -13,6 +13,7 @@ to setup
   set-default-shape lechugas "plant"
   set-default-shape suministros "square"
   dibujar-invernadero
+  dibujar-plantas
   reset-ticks
 end
 
@@ -25,6 +26,28 @@ end
 
 to dibujar-plantas
   ; son lechugas
+  ask patches with [pcolor = white and (pxcor mod 20) = 0 and (pycor mod 12) = 0] [
+    let temp 1
+    sprout-lechugas 1 [
+      set color green
+      set size 5
+      set temp self
+    ]
+    sprout-suministros 1[
+      set color blue
+      set size 3
+      create-link-with temp
+      set xcor xcor - 1.2
+      set ycor ycor - 4
+    ]
+    sprout-suministros 1[
+      set color gray
+      set size 3
+      create-link-with temp
+      set xcor xcor + 1.2
+      set ycor ycor - 4
+    ]
+  ]
   ; Tienen un factor de absorcion de agua y de nutrientes
   ; Tienen un factor de crecimiento
   ; maximo de suministro de agua
