@@ -12,15 +12,39 @@ to setup
   set-default-shape soles "circle"
   set-default-shape lechugas "plant"
   set-default-shape suministros "square"
+  dibujar-sol
   dibujar-invernadero
   reset-ticks
 end
 
 to dibujar-sol
-  ;; Su ubicacion puede ser aleatoria
   ; Su radiacion puede ser aleatoria
   ; Su trayectoria puede cambiar en cada dia
-  ; velocidad de translacion
+  create-soles 2
+  ask sol 0 [ set size 5 ]
+  ; ubicar 2 agentes en extremos del plano, conectados entre si,
+  ask soles [
+    set color yellow
+    create-link-with one-of other soles [
+      set shape "sun-road" ; se creo la forma en Tools > Link Shapes Editor
+      set color yellow
+    ]
+  ]
+  tayectoria-sol ; Traza ruta del sol
+
+end
+
+to tayectoria-sol
+   ;; Su ubicacion puede ser aleatoria
+  ifelse trayectoria-aleatoria
+  [
+    ask sol 0 [set xcor max-pxcor set ycor random-ycor]
+    ask sol 1 [set xcor min-pxcor set ycor random-ycor]
+  ]
+  [
+    ask sol 0 [set xcor max-pxcor set ycor sol-init]
+    ask sol 1 [set xcor min-pxcor set ycor sol-end]
+  ]
 end
 
 to dibujar-plantas
@@ -51,7 +75,15 @@ end
 ;;;;;;;;;;;;;;;;;;;;;
 
 to go  ;; forever button
+  avanza-sol
+  tick
+end
 
+to avanza-sol
+  ask sol 0 [
+    set heading towards sol 1 ; ubica la direccion del sol 1
+    fd 0.1 ; velocidad de translacion
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -114,6 +146,47 @@ NIL
 NIL
 NIL
 0
+
+SWITCH
+41
+130
+245
+163
+trayectoria-aleatoria
+trayectoria-aleatoria
+1
+1
+-1000
+
+SLIDER
+45
+186
+82
+336
+sol-end
+sol-end
+-35
+35
+-27.0
+1
+1
+NIL
+VERTICAL
+
+SLIDER
+90
+185
+127
+335
+sol-init
+sol-init
+-35
+35
+25.0
+1
+1
+NIL
+VERTICAL
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -479,6 +552,17 @@ default
 -0.2 0 0.0 1.0
 0.0 1 1.0 0.0
 0.2 0 0.0 1.0
+link direction
+true
+0
+Line -7500403 true 150 150 90 180
+Line -7500403 true 150 150 210 180
+
+sun-road
+0.0
+-0.2 1 4.0 4.0
+0.0 1 2.0 2.0
+0.2 1 4.0 4.0
 link direction
 true
 0
