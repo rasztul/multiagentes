@@ -3,6 +3,8 @@
 breed [soles sol]
 breed [lechugas lechuga]
 breed [suministros suministro]
+globals [ycor-init]
+patches-own[radiacion-patch invernadero]
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Setup procedures ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -22,7 +24,10 @@ to dibujar-sol
   ; Su radiacion puede ser aleatoria
   ; Su trayectoria puede cambiar en cada dia
   create-soles 2
-  ask sol 0 [ set size 5 ]
+  ask sol 0 [
+    set size 5
+    set radiacion-patch 300
+  ]
   ; ubicar 2 agentes en extremos del plano, conectados entre si,
   ask soles [
     set color yellow
@@ -31,6 +36,7 @@ to dibujar-sol
       set color yellow
     ]
   ]
+  ; radiacion propiedad de patches
   tayectoria-sol ; Traza ruta del sol
 
 end
@@ -39,13 +45,14 @@ to tayectoria-sol
    ;; Su ubicacion puede ser aleatoria
   ifelse trayectoria-aleatoria
   [
-    ask sol 0 [set xcor max-pxcor set ycor random-ycor]
-    ask sol 1 [set xcor min-pxcor set ycor random-ycor]
+    ask sol 0 [setxy max-pxcor random-ycor]
+    ask sol 1 [setxy min-pxcor random-ycor]
   ]
   [
-    ask sol 0 [set xcor max-pxcor set ycor sol-init]
-    ask sol 1 [set xcor min-pxcor set ycor sol-end]
+    ask sol 0 [setxy max-pxcor sol-init]
+    ask sol 1 [setxy min-pxcor sol-end]
   ]
+  ask sol 0 [set ycor-init ycor]
 end
 
 to dibujar-plantas
@@ -90,7 +97,11 @@ to configuracion-parametros
 end
 
 to dibujar-invernadero
-  ask patches [ if ( pycor > -20 ) and (pycor < 20) [set pcolor white]]
+  ask patches [
+    set invernadero false
+    if ( pycor > -20 ) and (pycor < 20)
+    [set pcolor white set invernadero true]
+  ]
 end
 
 ;;;;;;;;;;;;;;;;;;;;;
@@ -99,15 +110,74 @@ end
 
 to go  ;; forever button
   avanza-sol
+  ;recolor-patch
   tick
 end
 
 to avanza-sol
+  let fin-dia? false
+
   ask sol 0 [
     set heading towards sol 1 ; ubica la direccion del sol 1
     fd 0.1 ; velocidad de translacion
+    if xcor - .1 < min-pxcor ; si llega al final del mundo
+    [
+      set fin-dia? true
+    ]
+    set radiacion-patch radiacion-patch + 70 ;aumenta la radiacion conforme avanza
+  ]
+  if fin-dia? [setup]
+  diffuse radiacion-patch .2
+  dibujar-radiacion
+  recolor-escenario
+end
+
+
+to dibujar-radiacion
+
+  ask sol 0 [
+    ask patches in-radius radiacion [
+
+      ;set radiacion-patch radiacion-patch * 2
+
+      ifelse invernadero and (pycor < -15 or pycor > 15 )
+      [if random-float 100 < 30 ; cantidad de radiacion a traves de vidrio
+        [recolor-patch]]
+      [
+        if pcolor = black ; pinta radiacion en escenario vacio
+        [ recolor-patch ]
+  ]
+
+    ]
+  ]
+
+
+end
+
+to recolor-patch
+  set radiacion-patch radiacion-patch * 1.2
+  set pcolor scale-color orange radiacion-patch  50 1600 ;5
+
+end
+
+to recolor-escenario
+  ask patches[
+    if radiacion-patch < 800
+    [
+      ifelse invernadero
+      [set pcolor white]
+      [set pcolor black]
+    ]
   ]
 end
+
+
+
+
+
+
+
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 257
@@ -177,20 +247,20 @@ SWITCH
 163
 trayectoria-aleatoria
 trayectoria-aleatoria
-1
+0
 1
 -1000
 
 SLIDER
 45
 186
-82
+78
 336
 sol-end
 sol-end
 -35
 35
--27.0
+-35.0
 1
 1
 NIL
@@ -199,17 +269,32 @@ VERTICAL
 SLIDER
 90
 185
-127
+123
 335
 sol-init
 sol-init
 -35
 35
-25.0
+-19.0
 1
 1
 NIL
 VERTICAL
+
+SLIDER
+45
+354
+217
+387
+radiacion
+radiacion
+0
+30
+9.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
