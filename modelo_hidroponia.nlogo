@@ -1,14 +1,20 @@
 ;por Pablo Plaza y Raul Gardunho
-
 breed [soles sol]
 breed [lechugas lechuga]
 breed [suministros suministro]
 suministros-own [agua?]
-globals [ycor-init]
+globals [xcor-init ycor-init max-radiacion-value]
 patches-own[radiacion-patch invernadero]
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Setup procedures ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
+
+;to configuracion-parametros
+  ; factor de evaporacion
+  ; Suministro general de agua
+  ; velocidad de translacion de agua
+  ; suministro gral de nutrientes
+;end
 
 to setup
   clear-all
@@ -16,33 +22,31 @@ to setup
   set-default-shape lechugas "plant"
   set-default-shape suministros "square"
   dibujar-sol
+  tayectoria-sol ; configura la trayectoria del sol
   dibujar-invernadero
   dibujar-plantas
   reset-ticks
 end
 
+
 to dibujar-sol
-  ; Su radiacion puede ser aleatoria
-  ; Su trayectoria puede cambiar en cada dia
   create-soles 2
-  ask sol 0 [
-    set size 5
-    set radiacion-patch 300
-  ]
   ; ubicar 2 agentes en extremos del plano, conectados entre si,
   ask soles [
     set color yellow
     create-link-with one-of other soles [
       set shape "sun-road" ; se creo la forma en Tools > Link Shapes Editor
-      set color yellow
-    ]
+      set color yellow ]
   ]
-  ; radiacion propiedad de patches
-  tayectoria-sol ; Traza ruta del sol
-
+  ask sol 0 [
+    set size 5 ; tamaño del sol
+    set radiacion-patch 25 ; valor inicial de radiacion solar
+  ]
 end
 
+; configura punto inicial y final de la trayectoria solar
 to tayectoria-sol
+   ; TODO: Su trayectoria puede cambiar en cada dia
    ;; Su ubicacion puede ser aleatoria
   ifelse trayectoria-aleatoria
   [
@@ -53,7 +57,15 @@ to tayectoria-sol
     ask sol 0 [setxy max-pxcor sol-init]
     ask sol 1 [setxy min-pxcor sol-end]
   ]
-  ask sol 0 [set ycor-init ycor]
+  ask sol 0 [set ycor-init ycor set xcor-init xcor] ; asigna el valor de inicio al sol
+end
+
+to dibujar-invernadero
+  ask patches [
+    set invernadero false
+    if ( pycor > -20 ) and (pycor < 20)
+    [set pcolor white set invernadero true]
+  ]
 end
 
 to dibujar-plantas
@@ -110,90 +122,75 @@ to dibujar-plantas
 
 end
 
-to configuracion-parametros
-  ; Radiacion solar
-  ; factor de evaporacion
-  ; trayectoria del sol
-  ; Suministro general de agua
-  ; velocidad de translacion de agua
-  ; suministro gral de nutrientes
-end
-
-to dibujar-invernadero
-  ask patches [
-    set invernadero false
-    if ( pycor > -20 ) and (pycor < 20)
-    [set pcolor white set invernadero true]
-  ]
-end
-
 ;;;;;;;;;;;;;;;;;;;;;
 ;;; Go procedures ;;;
 ;;;;;;;;;;;;;;;;;;;;;
 
 to go  ;; forever button
   avanza-sol
-  ;recolor-patch
+  dibujar-radiacion
+  recolor-escenario
   tick
 end
 
+; avanza sol 0 en direccion a sol 1
 to avanza-sol
   let fin-dia? false
-
   ask sol 0 [
-    set heading towards sol 1 ; ubica la direccion del sol 1
+    set heading towards sol 1 ; ubica elpunto final de la ruta
     fd 0.1 ; velocidad de translacion
     if xcor - .1 < min-pxcor ; si llega al final del mundo
-    [
-      set fin-dia? true
-    ]
+    [ set fin-dia? true   ]
     set radiacion-patch radiacion-patch + 70 ;aumenta la radiacion conforme avanza
   ]
-  if fin-dia? [setup]
-  diffuse radiacion-patch .2
-  dibujar-radiacion
-  recolor-escenario
+  if fin-dia? [ recolor-dia ]
+  diffuse radiacion-patch ratio-diffuse ; ratio de difusion de radiacion solar
 end
 
+; reinicia valores como al inicio de la simulacion
+to recolor-dia
+  set max-radiacion-value max-radiacion-value + 9999; valor arbitrario para borrar reminiscencias de radiacion
+  recolor-escenario
+  ask sol 0 [setxy xcor-init ycor-init] ; ubica al sol en su pocision de inicio
+  ask patches [set radiacion-patch 0] ; reinicia valores de radiacion en los patches
+end
 
+; dibuja radiacion alrededor del sol
 to dibujar-radiacion
-
+  ; obtiene el patch con mayor radiacion y lo asigna a max-radiacion-value
+  ask patches with-max [radiacion-patch] [set max-radiacion-value radiacion-patch]
   ask sol 0 [
+    ; selecciona a los patches dentro del radio solar indicado en la interfaz de usuario
     ask patches in-radius radiacion [
-
-      ;set radiacion-patch radiacion-patch * 2
-
       ifelse invernadero and (pycor < -15 or pycor > 15 )
       [if random-float 100 < 30 ; cantidad de radiacion a traves de vidrio
-        [recolor-patch]]
-      [
-        if pcolor = black ; pinta radiacion en escenario vacio
-        [ recolor-patch ]
-  ]
-
+        [recolor-radiacion]]
+      [ if pcolor = black ; pinta radiacion en escenario vacio
+        [ recolor-radiacion ]]
     ]
   ]
-
-
 end
 
-to recolor-patch
+; pinta radiacion en escala de naranja
+to recolor-radiacion
+  ; aumenta 20 % el valor de radiacion-patch para mejorar la simulacion de radiacion solar
   set radiacion-patch radiacion-patch * 1.2
-  set pcolor scale-color orange radiacion-patch  50 1600 ;5
-
+  ; pinta la parte proporcional a naranja de acuerdo a radiacion-patch
+  set pcolor scale-color orange radiacion-patch  50 max-radiacion-value
 end
 
+; repinta el escenario, borrando rastros de radiacion
 to recolor-escenario
   ask patches[
-    if radiacion-patch < 800
+    ; si el patch tiene la mitad del patch con mayor radiacion
+    if radiacion-patch < (max-radiacion-value * .5 )
     [
-      ifelse invernadero
-      [set pcolor white]
-      [set pcolor black]
+      ifelse invernadero ; si el patch es del invernadero
+      [set pcolor white] ; pinta blanco
+      [set pcolor black] ; else pinta negro
     ]
   ]
 end
-
 
 
 
@@ -311,8 +308,40 @@ radiacion
 radiacion
 0
 30
-9.0
+7.0
 1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+54
+24
+118
+57
+step
+go
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+46
+396
+218
+429
+ratio-diffuse
+ratio-diffuse
+0
+1
+0.33
+.01
 1
 NIL
 HORIZONTAL
@@ -347,7 +376,6 @@ HORIZONTAL
 
 
 ## COPYRIGHT AND LICENSE
-
 @#$#@#$#@
 default
 true
