@@ -23,8 +23,8 @@ to setup
   set-default-shape suministros "square"
   dibujar-sol
   tayectoria-sol ; configura la trayectoria del sol
-  dibujar-invernadero
-  dibujar-plantas
+  dibujar-invernadero ; delimita área correspondiente al invernadero
+  dibujar-plantas ; inicializa plantas y suministros
   reset-ticks
 end
 
@@ -71,9 +71,9 @@ end
 to dibujar-plantas
   ; son lechugas
   let col 500; auxiliar para crear links con nodos de más a la izquierda
-  ask patches with [pcolor = white and (pxcor mod 20) = 0 and (pycor mod 12) = 0] [
-    let temp 1
-    sprout-lechugas 1 [
+  ask patches with [pcolor = white and (pxcor mod 20) = 0 and (pycor mod 12) = 0] [ ; patches correspondientes a posición de las lechugas
+    let temp 1 ; variable temporal usada para crear link de lechugas con sus suministros locales
+    sprout-lechugas 1 [ ; debiese crear lechugas en condición inicial, antes de que empiecen a crecer
       set color green
       set size 5
       set temp self
@@ -86,32 +86,32 @@ to dibujar-plantas
       create-link-with temp
       set xcor xcor - 1.2
       set ycor ycor - 4
-      set sa self
+      set sa self ; variable auxiliar para crear link entre este suministro y la red que lo conecta al suministro general
     ]
     sprout-suministros 1[
       set color gray
       set size 3
-      set agua? false
+      set agua? false ; suministro de nutriente
       create-link-with temp
       set xcor xcor + 1.2
       set ycor ycor - 4
     ]
-    sprout 1[
+    sprout 1[ ; tortuga de tamaño 0 usada como nodo de la red de suministro de agua
       set size 0
       set xcor xcor - 1.25
       set ycor ycor - 6
-      create-link-with sa
+      create-link-with sa ; la idea es representar el transporte de agua usando estos links como guía
       let mycor ycor
       create-links-with other turtles with [ycor = mycor]
-      set col min(list col xcor)
+      set col min(list col xcor) ; guarda la coordenada de más a la izquierda que estos nodos pueden tener, para crear link con suministro general
     ]
   ]
   ask patch -30 0 [
-    sprout-suministros 1[
+    sprout-suministros 1[ ; el suministro general de agua
       set color cyan
       set size 10
       set agua? true
-      create-links-with turtles with [xcor = col];other suministros with [agua? = true]
+      create-links-with turtles with [xcor = col] ;
     ]
   ]
   ; Tienen un factor de absorcion de agua y de nutrientes
@@ -137,7 +137,7 @@ end
 to avanza-sol
   let fin-dia? false
   ask sol 0 [
-    set heading towards sol 1 ; ubica elpunto final de la ruta
+    set heading towards sol 1 ; ubica el punto final de la ruta
     fd 0.1 ; velocidad de translacion
     if xcor - .1 < min-pxcor ; si llega al final del mundo
     [ set fin-dia? true   ]
@@ -191,7 +191,6 @@ to recolor-escenario
     ]
   ]
 end
-
 
 
 
