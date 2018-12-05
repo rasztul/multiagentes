@@ -2,17 +2,13 @@
 breed [soles sol]
 breed [lechugas lechuga]
 breed [suministros suministro]
-suministros-own [agua?]
-globals [xcor-init ycor-init max-radiacion-value]
+suministros-own [agua? contenido gral?]
+globals [xcor-init ycor-init max-radiacion-value contenido-gral]
 patches-own[radiacion-patch invernadero]
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Setup procedures ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ; TODO:
-; suministro gral de nutrientes
-; flujo de suministros
-; velocidad de translacion de agua
-; factor de evaporacion
 ; crecimiento de lechuga
 ; behavior space
 
@@ -87,14 +83,18 @@ to dibujar-plantas
       set xcor xcor - 1.2
       set ycor ycor - 4
       set sa self ; variable auxiliar para crear link entre este suministro y la red que lo conecta al suministro general
+      set contenido capacidad-local
+      set gral? false
     ]
     sprout-suministros 1[
-      set color gray
+      set color blue
       set size 3
-      set agua? false ; suministro de nutriente
+      set agua? true ; suministro de nutriente
       create-link-with temp
       set xcor xcor + 1.2
       set ycor ycor - 4
+      set contenido capacidad-local
+      set gral? false
     ]
     sprout 1[ ; tortuga de tamaño 0 usada como nodo de la red de suministro de agua
       set size 0
@@ -112,6 +112,9 @@ to dibujar-plantas
       set size 10
       set agua? true
       create-links-with turtles with [xcor = col] ;
+      set contenido contenido-gral-init
+      set contenido-gral contenido-gral-init
+      set gral? true
     ]
   ]
   ; Tienen un factor de absorcion de agua y de nutrientes
@@ -130,6 +133,9 @@ to go  ;; forever button
   avanza-sol
   dibujar-radiacion
   recolor-escenario
+  evaporacion-por-radiacion
+  if contenido-gral < 0
+  [stop]
   tick
 end
 
@@ -192,6 +198,35 @@ to recolor-escenario
   ]
 end
 
+to evaporacion-por-radiacion
+  ask suministros[
+    let patch-muestra one-of patches in-radius 5
+    let ratio-evaporacion 0
+    ask patch-muestra [
+      set ratio-evaporacion ( radiacion-patch / ratio-evaporacion-agua )
+    ]
+    if gral? [set ratio-evaporacion ratio-evaporacion / 10 ]
+    set contenido (contenido - ratio-evaporacion)
+    set color (color - ratio-evaporacion)
+
+    verificar-contenido
+
+  ]
+end
+
+to verificar-contenido
+  if contenido < 0 and not gral? and contenido-gral > 0[
+    set contenido 10
+    set color blue
+    ask suministros with [gral? = true ]
+    [
+      set contenido contenido - 2
+      set contenido-gral contenido
+      set color color - .02
+    ]
+  ]
+
+end
 
 
 @#$#@#$#@
@@ -263,7 +298,7 @@ SWITCH
 163
 trayectoria-aleatoria
 trayectoria-aleatoria
-1
+0
 1
 -1000
 
@@ -340,6 +375,58 @@ ratio-diffuse
 1
 0.33
 .01
+1
+NIL
+HORIZONTAL
+
+INPUTBOX
+47
+439
+208
+499
+contenido-gral-init
+100.0
+1
+0
+Number
+
+MONITOR
+46
+557
+185
+602
+Suministro general
+[contenido] of suministros with [gral? = true ]
+17
+1
+11
+
+SLIDER
+43
+508
+215
+541
+capacidad-local
+capacidad-local
+0
+10
+5.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+231
+569
+483
+602
+ratio-evaporacion-agua
+ratio-evaporacion-agua
+10000
+100000
+40000.0
+10000
 1
 NIL
 HORIZONTAL
