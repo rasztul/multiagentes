@@ -3,8 +3,9 @@ breed [soles sol]
 breed [lechugas lechuga]
 breed [suministros suministro]
 suministros-own [agua? contenido gral?]
-globals [xcor-init ycor-init max-radiacion-value contenido-gral]
+globals [xcor-init ycor-init max-radiacion-value contenido-gral lechugas-cosechadas dias]
 patches-own[radiacion-patch invernadero]
+lechugas-own[crecimiento]
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Setup procedures ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -71,7 +72,8 @@ to dibujar-plantas
     let temp 1 ; variable temporal usada para crear link de lechugas con sus suministros locales
     sprout-lechugas 1 [ ; debiese crear lechugas en condición inicial, antes de que empiecen a crecer
       set color green
-      set size 5
+      set size 0
+      set crecimiento 0
       set temp self
     ]
     let sa 1
@@ -134,6 +136,7 @@ to go  ;; forever button
   dibujar-radiacion
   recolor-escenario
   evaporacion-por-radiacion
+  crecer
   if contenido-gral < 0
   [stop]
   tick
@@ -149,7 +152,8 @@ to avanza-sol
     [ set fin-dia? true   ]
     set radiacion-patch radiacion-patch + 70 ;aumenta la radiacion conforme avanza
   ]
-  if fin-dia? [ recolor-dia ]
+  if fin-dia? [ recolor-dia
+    set dias dias + 1]
   diffuse radiacion-patch ratio-diffuse ; ratio de difusion de radiacion solar
 end
 
@@ -198,6 +202,39 @@ to recolor-escenario
   ]
 end
 
+to crecer
+  ;if
+  ask lechugas [
+    let agua-absorb 0
+    ;crecimiento aumenta en funcion de radiacion y absorcion de agua (y nutriente)
+    if [radiacion-patch] of patch-here > 0[
+      ;ask (turtle-set [other-end] of my-links) with [agua?] [
+      ;  set agua-absorb resta-m contenido (capacidad-local / 20)
+      ;  set contenido contenido - agua-absorb
+      ;]
+      set crecimiento crecimiento + factor-crecimiento * ([radiacion-patch] of patch-here); * (agua-absorb / (capacidad-local / 20))
+    ]
+    set size 5 * (crecimiento / 1000)
+    if crecimiento > 1000[
+      let ss-ll turtle-set [other-end] of my-links ;suministros locales de la lechuga original
+      hatch-lechugas 1 [
+        set color green
+        set size 0
+        set crecimiento 0
+        create-links-with ss-ll
+      ]
+      set lechugas-cosechadas lechugas-cosechadas + 1
+      die
+    ]
+  ]
+end
+
+to-report resta-m [total deseado]
+  ifelse total > deseado
+  [report deseado]
+  [report total]
+end
+
 to evaporacion-por-radiacion
   ask suministros[
     let patch-muestra one-of patches in-radius 5
@@ -227,7 +264,6 @@ to verificar-contenido
   ]
 
 end
-
 
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -430,6 +466,43 @@ ratio-evaporacion-agua
 1
 NIL
 HORIZONTAL
+
+SLIDER
+827
+428
+999
+461
+factor-crecimiento
+factor-crecimiento
+0.01
+0.1
+0.1
+0.01
+1
+NIL
+HORIZONTAL
+
+MONITOR
+802
+27
+933
+72
+NIL
+lechugas-cosechadas
+17
+1
+11
+
+MONITOR
+952
+33
+1009
+78
+NIL
+dias
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
