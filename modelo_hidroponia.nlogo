@@ -203,9 +203,9 @@ to evaporacion-por-radiacion
     let patch-muestra one-of patches in-radius 5
     let ratio-evaporacion 0
     ask patch-muestra [
-      set ratio-evaporacion ( radiacion-patch / ratio-evaporacion-agua )
+      set ratio-evaporacion ( radiacion-patch / (ratio-evaporacion-agua * 1000000))
     ]
-    if gral? [set ratio-evaporacion ratio-evaporacion / 10 ]
+    if gral? [set ratio-evaporacion ratio-evaporacion / 100 ]
     set contenido (contenido - ratio-evaporacion)
     set color (color - ratio-evaporacion)
 
@@ -216,13 +216,13 @@ end
 
 to verificar-contenido
   if contenido < 0 and not gral? and contenido-gral > 0[
-    set contenido 10
+    set contenido capacidad-local
     set color blue
     ask suministros with [gral? = true ]
     [
-      set contenido contenido - 2
+      set contenido contenido - capacidad-local
       set contenido-gral contenido
-      set color color - .02
+      set color color - .05
     ]
   ]
 
@@ -298,7 +298,7 @@ SWITCH
 163
 trayectoria-aleatoria
 trayectoria-aleatoria
-0
+1
 1
 -1000
 
@@ -423,10 +423,10 @@ SLIDER
 602
 ratio-evaporacion-agua
 ratio-evaporacion-agua
-10000
-100000
-40000.0
-10000
+1
+50
+10.0
+1
 1
 NIL
 HORIZONTAL
