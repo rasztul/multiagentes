@@ -3,7 +3,7 @@ breed [soles sol]
 breed [lechugas lechuga]
 breed [suministros suministro]
 suministros-own [agua? contenido gral?]
-globals [xcor-init ycor-init max-radiacion-value contenido-gral lechugas-cosechadas dias]
+globals [xcor-init ycor-init max-radiacion-value contenido-gral lechugas-cosechadas dias multiplicador-crecimiento]
 patches-own[radiacion-patch invernadero]
 lechugas-own[crecimiento]
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -22,6 +22,7 @@ to setup
   tayectoria-sol ; configura la trayectoria del sol
   dibujar-invernadero ; delimita área correspondiente al invernadero
   dibujar-plantas ; inicializa plantas y suministros
+  set multiplicador-crecimiento 10
   reset-ticks
 end
 
@@ -208,11 +209,12 @@ to crecer
     let agua-absorb 0
     ;crecimiento aumenta en funcion de radiacion y absorcion de agua (y nutriente)
     if [radiacion-patch] of patch-here > 0[
-      ;ask (turtle-set [other-end] of my-links) with [agua?] [
-      ;  set agua-absorb resta-m contenido (capacidad-local / 20)
-      ;  set contenido contenido - agua-absorb
-      ;]
-      set crecimiento crecimiento + factor-crecimiento * ([radiacion-patch] of patch-here); * (agua-absorb / (capacidad-local / 20))
+      ask one-of (turtle-set [other-end] of my-links) with [agua?] [
+        set agua-absorb resta-m contenido (absorcion-agua / 1000);a
+        set contenido contenido - agua-absorb
+      ]
+      let factor-crecimiento ((ganancia-agua / 100) + ([radiacion-patch] of patch-here / 100000))
+      set crecimiento crecimiento + factor-crecimiento * multiplicador-crecimiento
     ]
     set size 5 * (crecimiento / 1000)
     if crecimiento > 1000[
@@ -347,7 +349,7 @@ sol-end
 sol-end
 -35
 35
--35.0
+3.0
 1
 1
 NIL
@@ -427,10 +429,10 @@ contenido-gral-init
 Number
 
 MONITOR
-46
-557
-185
-602
+800
+98
+939
+143
 Suministro general
 [contenido] of suministros with [gral? = true ]
 17
@@ -454,14 +456,14 @@ HORIZONTAL
 
 SLIDER
 231
-569
+529
 483
-602
+562
 ratio-evaporacion-agua
 ratio-evaporacion-agua
 1
 50
-10.0
+11.0
 1
 1
 NIL
@@ -470,14 +472,14 @@ HORIZONTAL
 SLIDER
 827
 428
-999
+1067
 461
-factor-crecimiento
-factor-crecimiento
-0.01
-0.1
-0.1
-0.01
+ganancia-agua
+ganancia-agua
+1
+10
+1.0
+1
 1
 NIL
 HORIZONTAL
@@ -503,6 +505,21 @@ dias
 17
 1
 11
+
+SLIDER
+827
+377
+999
+410
+absorcion-agua
+absorcion-agua
+1
+10
+5.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
