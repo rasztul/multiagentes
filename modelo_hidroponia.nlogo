@@ -204,11 +204,14 @@ to crecer
   ;if
   ask lechugas [
     let agua-absorb 0
-    ask (turtle-set [other-end] of my-links) with [agua?] [
-      set agua-absorb resta-m cantidad 7
-      set cantidad cantidad - agua-absorb
+    ;crecimiento aumenta en fincion de radiacion y absorcion de agua (y nutriente)
+    if [radiacion-patch] of patch-here > 0[
+      ask (turtle-set [other-end] of my-links) with [agua?] [
+        set agua-absorb resta-m cantidad 3
+        set cantidad cantidad - agua-absorb
+      ]
+      set crecimiento crecimiento + factor-crecimiento * ([radiacion-patch] of patch-here) * (agua-absorb / 3)
     ]
-    set crecimiento crecimiento + factor-crecimiento * ([radiacion-patch] of patch-here)
     set size 5 * (crecimiento / 1000)
     if crecimiento > 1000[
       let ss-ll turtle-set [other-end] of my-links ;suministros locales de la lechuga original
@@ -298,7 +301,7 @@ SWITCH
 163
 trayectoria-aleatoria
 trayectoria-aleatoria
-0
+1
 1
 -1000
 
@@ -311,7 +314,7 @@ sol-end
 sol-end
 -35
 35
--35.0
+7.0
 1
 1
 NIL
@@ -326,7 +329,7 @@ sol-init
 sol-init
 -35
 35
--35.0
+-12.0
 1
 1
 NIL

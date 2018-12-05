@@ -1,1 +1,3 @@
 http://www.oasiseasyplant.mx/2017/05/propagacion-produccion-lechuga-hidroponica-lo-debes-saber/
+Netlogo/Models/ plant Growth
+http://modelingcommons.org/browse/one_model/2783#model_tabs_browse_procedures
