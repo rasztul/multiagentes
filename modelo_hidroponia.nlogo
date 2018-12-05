@@ -2,9 +2,10 @@
 breed [soles sol]
 breed [lechugas lechuga]
 breed [suministros suministro]
-suministros-own [agua?]
-globals [xcor-init ycor-init max-radiacion-value]
+suministros-own [agua? cantidad maximo]
+globals [xcor-init ycor-init max-radiacion-value lechugas-cosechadas dias]
 patches-own[radiacion-patch invernadero]
+lechugas-own[crecimiento]
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Setup procedures ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -75,7 +76,8 @@ to dibujar-plantas
     let temp 1 ; variable temporal usada para crear link de lechugas con sus suministros locales
     sprout-lechugas 1 [ ; debiese crear lechugas en condición inicial, antes de que empiecen a crecer
       set color green
-      set size 5
+      set size 0
+      set crecimiento 0
       set temp self
     ]
     let sa 1
@@ -87,6 +89,8 @@ to dibujar-plantas
       set xcor xcor - 1.2
       set ycor ycor - 4
       set sa self ; variable auxiliar para crear link entre este suministro y la red que lo conecta al suministro general
+      set maximo max-sl
+      set cantidad maximo
     ]
     sprout-suministros 1[
       set color gray
@@ -111,6 +115,8 @@ to dibujar-plantas
       set color cyan
       set size 10
       set agua? true
+      set cantidad sum-gral-init
+      set label "agua general"
       create-links-with turtles with [xcor = col] ;
     ]
   ]
@@ -130,6 +136,7 @@ to go  ;; forever button
   avanza-sol
   dibujar-radiacion
   recolor-escenario
+  crecer
   tick
 end
 
@@ -143,7 +150,8 @@ to avanza-sol
     [ set fin-dia? true   ]
     set radiacion-patch radiacion-patch + 70 ;aumenta la radiacion conforme avanza
   ]
-  if fin-dia? [ recolor-dia ]
+  if fin-dia? [ recolor-dia
+    set dias dias + 1]
   diffuse radiacion-patch ratio-diffuse ; ratio de difusion de radiacion solar
 end
 
@@ -192,9 +200,35 @@ to recolor-escenario
   ]
 end
 
+to crecer
+  ;if
+  ask lechugas [
+    let agua-absorb 0
+    ask (turtle-set [other-end] of my-links) with [agua?] [
+      set agua-absorb resta-m cantidad 7
+      set cantidad cantidad - agua-absorb
+    ]
+    set crecimiento crecimiento + factor-crecimiento * ([radiacion-patch] of patch-here)
+    set size 5 * (crecimiento / 1000)
+    if crecimiento > 1000[
+      let ss-ll turtle-set [other-end] of my-links ;suministros locales de la lechuga original
+      hatch-lechugas 1 [
+        set color green
+        set size 0
+        set crecimiento 0
+        create-links-with ss-ll
+      ]
+      set lechugas-cosechadas lechugas-cosechadas + 1
+      die
+    ]
+  ]
+end
 
-
-
+to-report resta-m [total deseado]
+  ifelse total > deseado
+  [report deseado]
+  [report total]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 257
@@ -292,7 +326,7 @@ sol-init
 sol-init
 -35
 35
--19.0
+-35.0
 1
 1
 NIL
@@ -307,7 +341,7 @@ radiacion
 radiacion
 0
 30
-7.0
+30.0
 1
 1
 NIL
@@ -339,11 +373,70 @@ ratio-diffuse
 ratio-diffuse
 0
 1
-0.33
+0.62
 .01
 1
 NIL
 HORIZONTAL
+
+INPUTBOX
+21
+441
+97
+501
+sum-gral-init
+1000.0
+1
+0
+Number
+
+SLIDER
+788
+479
+960
+512
+factor-crecimiento
+factor-crecimiento
+0.01
+0.1
+0.05
+0.01
+1
+NIL
+HORIZONTAL
+
+MONITOR
+776
+17
+907
+62
+NIL
+lechugas-cosechadas
+17
+1
+11
+
+INPUTBOX
+103
+442
+202
+502
+max-sl
+1000.0
+1
+0
+Number
+
+MONITOR
+918
+18
+975
+63
+NIL
+dias
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -662,6 +755,47 @@ NetLogo 6.0.4
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="factorcrecimientosinsolniagua-diasencosechar" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <exitCondition>lechugas-cosechadas &gt; 0</exitCondition>
+    <metric>dias</metric>
+    <enumeratedValueSet variable="sol-end">
+      <value value="-35"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ratio-diffuse">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sum-gral-init">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="radiacion">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="sol-init">
+      <value value="-35"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="factor-crecimiento">
+      <value value="0.01"/>
+      <value value="0.02"/>
+      <value value="0.03"/>
+      <value value="0.04"/>
+      <value value="0.05"/>
+      <value value="0.06"/>
+      <value value="0.07"/>
+      <value value="0.08"/>
+      <value value="0.09"/>
+      <value value="0.1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="trayectoria-aleatoria">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-sl">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default
