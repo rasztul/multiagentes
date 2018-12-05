@@ -8,13 +8,13 @@ patches-own[radiacion-patch invernadero]
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Setup procedures ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
-
-;to configuracion-parametros
-  ; factor de evaporacion
-  ; Suministro general de agua
-  ; velocidad de translacion de agua
-  ; suministro gral de nutrientes
-;end
+; TODO:
+; suministro gral de nutrientes
+; flujo de suministros
+; velocidad de translacion de agua
+; factor de evaporacion
+; crecimiento de lechuga
+; behavior space
 
 to setup
   clear-all
@@ -194,7 +194,6 @@ end
 
 
 
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 257
@@ -264,7 +263,7 @@ SWITCH
 163
 trayectoria-aleatoria
 trayectoria-aleatoria
-0
+1
 1
 -1000
 
